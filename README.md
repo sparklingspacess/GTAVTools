@@ -269,7 +269,7 @@ namespace MobileRadio
                     soundset = "Phone_Soundset_Trevor";
                 }
                 //Playing the "toggle noise"
-                GTAV.PlaySoundFrontend("Menu_Accept", soundset);
+                GTAV.PlaySoundFrontend(soundset, "Menu_Accept");
                 //Toggling the audio flag for the mobile radio.
                 Function.Call(GTAV.HexHashToNativeHashU(0xB9EFD5C25018725A), "MobileRadioInGame", on);
                 //Toggling the mobile radio actually being active.
