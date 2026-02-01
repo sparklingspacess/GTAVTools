@@ -63,6 +63,31 @@ Vector3 spawnpoint = GTAV.player.character.position + GTAV.player.character.forw
 GTAVPickup pickup = new GTAVPickup(PickupCache.PICKUP_WEAPON_PISTOL, spawnpoint); //Pickup currently lacks changeable arguments, will have alot more arguments soon.
 ```
 
+## Memory
+**Please do not attempt to modify any type of memory that you are not familiar with, memory modifying is unsafe if you don't know what you're doing**
+### Creating a memory patch
+```csharp
+IntPtr address = //You insert a memory address into here, to find patterns use GTAV.FindPattern\\
+byte[] newbytes = new byte[] { 0x01 };
+MemoryPatch patch = GTAV.CreateNewMemoryPatch(address, newbytes); //A memory patch can be used to overwrite bytes in game memory.
+```
+### Applying an already existing MemoryPatch
+```csharp
+patch.Patch()
+```
+### Reverting an applied MemoryPatch
+```csharp
+patch.Revert()
+```
+### Getting patterns
+```csharp
+IntPtr pattern = GTAV.FindPattern("pattern123", "patternmask123");  //"pattern123" is the pattern it scans for in memory, "pattermask123" specifies which bytes in the pattern must match exactly and which bytes are ignored.
+```
+### Getting the memory address of entities
+```csharp
+IntPtr memaddr = [ENTITY].memaddress
+```
+
 ## Code examples
 **More code examples will be coming soon*
 ### Basic player ragdoller
