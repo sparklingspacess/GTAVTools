@@ -1,15 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.IO;
+using System.Security;
+using System.Text;
 using GTA;
 using GTA.Math;
 using GTA.Native;
 using GTAVMemScanner;
-using GTAVTools;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Windows.Forms.VisualStyles;
 using Ctrl = GTA.Control;
 
 namespace GTAVTools
@@ -57,6 +55,20 @@ namespace GTAVTools
         {
             this.address = address;
             this.entity = entity;
+        }
+    }
+
+    /// <summary>
+    /// A bool inside an INI file.
+    /// </summary>
+    public class INIBool
+    {
+        public string name { get;  }
+        public bool value { get;  }
+        public INIBool(string name, bool value)
+        {
+            this.name = name;
+            this.value = value;
         }
     }
 
@@ -1100,6 +1112,14 @@ namespace GTAVTools
         public void Attach(GTAVEntity entity, int bone, Vector3 position, Vector3 rotation)
         {
             Function.Call(GTAV.HexHashToNativeHash(0x6B9BBD38AB0796DF), this.handle, entity.handle, bone, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z, false, false, false, false, 2, true);
+        }
+
+        /// <summary>
+        /// Places this prop on the ground properly.
+        /// </summary>
+        public void PlaceOnGroundProperly()
+        {
+            Function.Call(GTAV.HexHashToNativeHash(0x58A850EAEE20FAA3), this.handle);
         }
     }
 #endregion
@@ -3499,7 +3519,7 @@ namespace GTAVTools
     public class GTAV : Script
     {
 
-        private static GTAVPlayer internalplayer = new GTAVPlayer();
+        internal static GTAVPlayer internalplayer = new GTAVPlayer();
         internal static List<InternalMemIdentifier> memidentifiers = new List<InternalMemIdentifier>();
 
         /// <summary>
@@ -3510,6 +3530,17 @@ namespace GTAVTools
             get
             {
                 return internalplayer;
+            }
+        }
+
+        /// <summary>
+        /// The games global time scale.
+        /// </summary>
+        public static float timescale
+        {
+            set
+            {
+                Function.Call(GTAV.HexHashToNativeHash(0x1D408577D440E81E), value);
             }
         }
 
@@ -3729,6 +3760,80 @@ namespace GTAVTools
             fuck.TrimExcess();
             return fuck;
         }
+
+        /// <summary>
+        /// Reads a string category within an INI file.
+        /// </summary>
+        public static List<string> ReadCategoryOfINIFile(string path, string categoryname)
+        {
+            List<string> strings = new List<string>();
+            string[] lines = File.ReadAllLines(path);
+            bool inspecifiedsection = false;
+            foreach (string rl in lines)
+            {
+                string line = rl.Trim();
+                if (string.IsNullOrEmpty(line) || line.StartsWith(";") || line.StartsWith("//"))
+                {
+                    continue;
+                }
+                if (line.ToLower().Equals($"[{categoryname.ToLower()}]", StringComparison.OrdinalIgnoreCase))
+                {
+                    inspecifiedsection = true;
+                    continue;
+                }
+                if (line.StartsWith("[") && line.EndsWith("]") && inspecifiedsection)
+                {
+                    //reached another
+                    break;
+                }
+                if (inspecifiedsection)
+                {
+                    strings.Add(line);
+                }
+            }
+            return strings;
+        }
+
+        /// <summary>
+        /// Reads a INIBool category within an INI file.
+        /// </summary>
+        public static List<INIBool> ReadBoolCategoryOfINIFile(string path, string categoryname)
+        {
+            List<INIBool> bools = new List<INIBool>();
+            string[] lines = File.ReadAllLines(path);
+            bool inspecifiedsection = false;
+            foreach (string rl in lines)
+            {
+                string line = rl.Trim();
+                if (string.IsNullOrEmpty(line) || line.StartsWith(";") || line.StartsWith("//"))
+                {
+                    continue;
+                }
+                if (line.ToLower().Equals($"[{categoryname.ToLower()}]", StringComparison.OrdinalIgnoreCase))
+                {
+                    inspecifiedsection = true;
+                    continue;
+                }
+                if (line.StartsWith("[") && line.EndsWith("]") && inspecifiedsection)
+                {
+                    break;
+                }
+
+                if (inspecifiedsection)
+                {
+                    string[] parts = line.Split(new char[] { '=' }, 2);
+                    string key = parts[0].Trim();
+                    bool value = false;
+                    if (parts.Length > 1)
+                    {
+                        bool.TryParse(parts[1].Trim(), out value);
+                    }
+                    bools.Add(new INIBool(key, value));
+                }
+            }
+            return bools;
+        }
+
 
         /// <summary>
         /// Runs SHVDN's World.GetNearbyVehicles and then converts all of the vehicles into a GTAVVehicle and returns the list.
@@ -4100,5 +4205,101 @@ namespace GTAVTools
             }
         }
     }
+
+    ///// <summary>
+    ///// Utilites for running native calls.
+    ///// </summary>
+    //public unsafe static class NativeUtils
+    //{
+    //    [SuppressUnmanagedCodeSecurity]
+    //    [DllImport("ScriptHookV.dll", ExactSpelling = true, EntryPoint = "?nativeInit@@YAX_K@Z")]
+    //    private static extern void NativeInit(ulong hash);
+    //    [SuppressUnmanagedCodeSecurity]
+    //    [DllImport("ScriptHookV.dll", ExactSpelling = true, EntryPoint = "?nativePush64@@YAX_K@Z")]
+    //    private static extern void NativePush64(ulong val);
+    //    [SuppressUnmanagedCodeSecurity]
+    //    [DllImport("ScriptHookV.dll", ExactSpelling = true, EntryPoint = "?nativeCall@@YAPEA_KXZ")]
+    //    private static extern ulong* NativeCall();
+
+    //    /// <summary>
+    //    /// Converts a string into a pointer.
+    //    /// </summary>
+    //    internal static unsafe IntPtr String(string str)
+    //    {
+    //        byte[] utf8 = Encoding.UTF8.GetBytes(str);
+    //        IntPtr ptr = Marshal.AllocCoTaskMem(utf8.Length + 1);
+    //        if (ptr == IntPtr.Zero)
+    //        {
+    //            throw new Exception("Out of game memory.");
+    //        }
+    //        Marshal.Copy(utf8, 0, ptr, utf8.Length);
+    //        byte* pointer = (byte*)ptr.ToPointer();
+    //        pointer[utf8.Length] = 0;
+    //        return ptr;
+    //    }
+
+    //    /// <summary>
+    //    /// Pins a string.
+    //    /// </summary>
+    //    internal static IntPtr PinString(string str)
+    //    {
+    //        IntPtr handle = String(str);
+    //        return handle == IntPtr.Zero ? String("") : handle;
+    //    }
+
+    //    /// <summary>
+    //    /// Runs a native with the specified arguments.
+    //    /// </summary>
+    //    public static void Execute(ulong hash, params object[] args)
+    //    {
+    //        NativeInit(hash);
+    //        for (int i = args.Length - 1; i >= 0; i--)
+    //        {
+    //            NativePush64(new NativeArg(args[i]).value);
+    //        }
+    //        NativeCall();
+    //    }
+    //}
+
+    ///// <summary>
+    ///// A native argument.
+    ///// </summary>
+    //public class NativeArg
+    //{
+    //    public ulong value { get; }
+
+    //    public NativeArg(object arg)
+    //    {
+    //        switch (arg)
+    //        {
+    //            case int i:
+    //                value = (ulong)i;
+    //                break;
+    //            case uint ui:
+    //                value = ui;
+    //                break;
+    //            case bool b:
+    //                value = b ? 1UL : 0UL;
+    //                break;
+    //            case float f:
+    //                value = BitConverter.ToUInt32(BitConverter.GetBytes(f), 0);
+    //                break;
+    //            case double d:
+    //                value = BitConverter.ToUInt64(BitConverter.GetBytes(d), 0);
+    //                break;
+    //            case IntPtr ptr:
+    //                value = (ulong)ptr.ToInt64();
+    //                break;
+    //            case string s:
+    //                value = (ulong)NativeUtils.PinString(s).ToInt64();
+    //                break;
+    //            case Enum e:
+    //                value = Convert.ToUInt64(e);
+    //                break;
+    //            default:
+    //                throw new Exception($"Unsupported argument on native: {arg.GetType()}");
+    //        }
+    //    }
+    //}
     #endregion
 }
