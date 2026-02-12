@@ -132,12 +132,13 @@ namespace GTAVToolsExample1
 ```
 ### Better bullet impacts (one of my mods)
 ```csharp
-using System;
-using System.Collections.Generic;
 using GTA;
 using GTA.Math;
 using GTA.Native;
 using GTAVTools;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace BetterBulletImpacts
 {
@@ -147,46 +148,46 @@ namespace BetterBulletImpacts
         public GTAVPlayer me;
         public bool ptfx = false;
         public List<WeaponCache> powerfulweapons = new List<WeaponCache>();
+        public List<WeaponCache> critweapons = new List<WeaponCache>();
         public List<int> fatalbones = new List<int>();
 
         public BetterBulletImpacts()
         {
             Tick += OnTick;
             this.me = GTAV.player;
-            //All of the weapons that will make the blood spray bigger.
-            powerfulweapons.Add(WeaponCache.WEAPON_MG);
-            powerfulweapons.Add(WeaponCache.WEAPON_COMBATMG);
-            powerfulweapons.Add(WeaponCache.WEAPON_COMBATMG_MK2);
-            powerfulweapons.Add(WeaponCache.WEAPON_REVOLVER);
-            powerfulweapons.Add(WeaponCache.WEAPON_REVOLVER_MK2);
-            powerfulweapons.Add(WeaponCache.WEAPON_SNIPERRIFLE);
-            powerfulweapons.Add(WeaponCache.WEAPON_HEAVYSNIPER);
-            powerfulweapons.Add(WeaponCache.WEAPON_HEAVYSNIPER_MK2);
-            powerfulweapons.Add(WeaponCache.WEAPON_HEAVYSHOTGUN);
-            powerfulweapons.Add(WeaponCache.WEAPON_PUMPSHOTGUN);
-            powerfulweapons.Add(WeaponCache.WEAPON_PUMPSHOTGUN_MK2);
-            powerfulweapons.Add(WeaponCache.WEAPON_ASSAULTSHOTGUN);
-            powerfulweapons.Add(WeaponCache.WEAPON_BULLPUPSHOTGUN);
-            powerfulweapons.Add(WeaponCache.WEAPON_COMBATSHOTGUN);
-            powerfulweapons.Add(WeaponCache.WEAPON_DBSHOTGUN);
-            powerfulweapons.Add(WeaponCache.WEAPON_DOUBLEACTION);
-            powerfulweapons.Add(WeaponCache.WEAPON_MARKSMANPISTOL);
-            powerfulweapons.Add(WeaponCache.WEAPON_PRECISIONRIFLE);
-            powerfulweapons.Add(WeaponCache.WEAPON_AUTOSHOTGUN);
-            powerfulweapons.Add(WeaponCache.WEAPON_MINIGUN);
-            powerfulweapons.Add(WeaponCache.WEAPON_PISTOL50);
-            powerfulweapons.Add(WeaponCache.WEAPON_GADGETPISTOL);
-            powerfulweapons.Add(WeaponCache.WEAPON_BATTLERIFLE);
-            fatalbones.Add((int)Bone.SKEL_Head);
-            fatalbones.Add((int)Bone.SKEL_Neck_1);
-
+            string scriptsfolder = AppContext.BaseDirectory;
+            string configlocation = Path.Combine(scriptsfolder, "BBIConfig.ini");
+            foreach (string weapon in GTAV.ReadCategoryOfINIFile(configlocation, "powerfulweapons"))
+            {
+                WeaponCache cached;
+                bool parsed = Enum.TryParse<WeaponCache>(weapon, out cached);
+                if (parsed)
+                {
+                    powerfulweapons.Add(cached);
+                }
+            }
+            foreach (string weapon in GTAV.ReadCategoryOfINIFile(configlocation, "criticalweapons"))
+            {
+                WeaponCache cached;
+                bool parsed = Enum.TryParse<WeaponCache>(weapon, out cached);
+                if (parsed)
+                {
+                    critweapons.Add(cached);
+                }
+            }
+            foreach (string bone in GTAV.ReadCategoryOfINIFile(configlocation, "fatalboneids"))
+            {
+                if (int.TryParse(bone, out int boneid))
+                {
+                    fatalbones.Add(boneid);
+                }
+            }
         }
 
         public void OnTick(object sender, EventArgs e)
         {
             if (!ptfx)
             {
-                //Loading the PTFX (Particle FX)
                 ptfx = true;
                 GTAV.RequestPTFXAsset("scr_fbi1");
                 GTAV.RequestPTFXAsset("core");
@@ -195,28 +196,20 @@ namespace BetterBulletImpacts
             List<GTAVPed> peds = GTAV.GetAllGTAVPeds();
             foreach (GTAVPed ped in peds)
             {
-                if (me.IsTargettingEntity(ped.handle) && me.character.isshooting)
+                if (me.IsTargettingEntity(ped.handle) && me.character.isshooting && !me.character.isinvehicle)
                 {
-                    //If the player is using a heavy weapon.
                     bool isusingheavyweapon = powerfulweapons.Contains((WeaponCache)me.character.currentweapon);
-                    //The peds last bone that was damaged.
+                    bool isusingcritweapon = critweapons.Contains((WeaponCache)me.character.currentweapon);
                     int bone = ped.lastdamagebone;
-                    //If the ped was hit in a fatal bone.
                     bool didhitfatalbone = fatalbones.Contains(bone);
-                    //The players last bullet impact coordinates.
                     Vector3 bulletcoord = me.character.lastweaponhitcoord;
-                    //Some sort of weird method I used to get an offset.
                     Vector3 pos = Function.Call<Vector3>(GTAV.HexHashToNativeHash(0x2274BC1C4885E333), ped, bulletcoord.X, bulletcoord.Y, bulletcoord.Z);
-                    //Gets the BoneTransform for the last damaged bone.
                     BoneTransform bonetransform = ped.GetBoneTransformForBone(ped.GetBoneIndexFromBoneID(bone));
-                    //The players look vector/forward vector.
                     Vector3 rot = me.character.forwardvector;
-                    //Calculating the correct rotation.
                     Vector3 finalrot = rot - bonetransform.rot;
                     Vector3 corrected = new Vector3(finalrot.Z, finalrot.X, finalrot.Y);
                     if (!isusingheavyweapon)
                     {
-                        //Starts PTFX for the blood spray.
                         GTAV.SetPTFXAssetForNextCall("scr_fbi1");
                         GTAV.StartPTFXOnPedBone("scr_fbi1", "scr_fbi_autopsy_blood", ped, pos, corrected, ped.GetBoneIndexFromBoneID(bone), 0.3f, false);
                         GTAV.SetPTFXAssetForNextCall("core");
@@ -226,7 +219,6 @@ namespace BetterBulletImpacts
                     {
                         if (!didhitfatalbone)
                         {
-                            //Starts PTFX for the blood spray, bigger than using a non-heavy weapon.
                             GTAV.SetPTFXAssetForNextCall("scr_fbi1");
                             GTAV.StartPTFXOnPedBone("scr_fbi1", "scr_fbi_autopsy_blood", ped, pos, corrected, ped.GetBoneIndexFromBoneID(bone), 0.37f, false);
                             GTAV.SetPTFXAssetForNextCall("core");
@@ -234,14 +226,25 @@ namespace BetterBulletImpacts
                         }
                         else if (didhitfatalbone)
                         {
-                            //Starts PTFX for the blood spray, bigger than using a non-heavy weapon on a non-fatal bone.
                             GTAV.SetPTFXAssetForNextCall("scr_fbi1");
                             GTAV.StartPTFXOnPedBone("scr_fbi1", "scr_fbi_autopsy_blood", ped, pos, corrected, ped.GetBoneIndexFromBoneID(bone), 0.46f, false);
                             GTAV.SetPTFXAssetForNextCall("core");
                             GTAV.StartPTFXOnPedBone("core", "blood_stab", ped, ped.GetBoneIndexFromBoneID(bone), 1f, false);
                         }
                     }
-                    //Preventing spam.
+                    if (isusingcritweapon)
+                    {
+                        if (!didhitfatalbone)
+                        {
+                            GTAV.SetPTFXAssetForNextCall("cut_michael2");
+                            GTAV.StartPTFXOnPedBone("cut_michael2", "cs_mich2_blood_head_leak", ped, pos, corrected, ped.GetBoneIndexFromBoneID(bone), 0.45f, false);
+                        }
+                        else if (didhitfatalbone)
+                        {
+                            GTAV.SetPTFXAssetForNextCall("cut_michael2");
+                            GTAV.StartPTFXOnPedBone("cut_michael2", "cs_mich2_blood_head_leak", ped, pos, corrected, ped.GetBoneIndexFromBoneID(bone), 0.7f, false);
+                        }
+                    }
                     Script.Wait(200);
                 }
             }
