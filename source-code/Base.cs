@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Reflection;
 using System.Security;
 using System.Text;
 using GTA;
@@ -72,6 +73,7 @@ namespace GTAVTools
         }
     }
 
+    [Obsolete("These are used in the obsolete call GTAVPed.SendNMMessage, see the deprecation message on that function for more details.")]
     public enum NMMessage
     {
         //I extracted these from jedijosh920s post on gtaforums about all the Euphoria messages, you can see it at https://gtaforums.com/topic/817563-v-euphorianaturalmotion-messages/
@@ -102,6 +104,55 @@ namespace GTAVTools
         LeanRandom = 199,
         Teeter = 1221,
         PointArm = 838,
+    }
+
+    public enum NMJoint
+    {
+        LeftHip = 0,
+        LeftKnee = 1,
+        LeftAnkle = 2,
+        RightHip = 3,
+        RightKnee = 4,
+        RightAnkle = 5,
+        Spine0 = 6,
+        Spine1 = 7,
+        Spine2 = 8,
+        Spine3 = 9,
+        LeftClavicle = 10,
+        LeftShoulder = 11,
+        LeftElbow = 12,
+        LeftWrist = 13,
+        RightClavicle = 14,
+        RightShoulder = 15,
+        RightElbow = 16,
+        RightWrist = 17,
+        LowerNeck = 18,
+        UpperNeck = 19,
+    }
+
+    public enum NMBodyPart
+    {
+        Buttocks = 0,
+        LeftThigh = 1,
+        LeftShin = 2,
+        LeftFoot = 3,
+        RightThigh  = 4,
+        RightShin = 5,
+        RightFoot = 6,
+        Spine0 = 7,
+        Spine1 = 8,
+        Spine2 = 9,
+        Spine3 = 10,
+        LeftClavicle = 11,
+        LeftUpperArm = 12,
+        LeftLowerArm = 13,
+        LeftHand = 14,
+        RightClavicle = 15,
+        RightUpperArm = 16,
+        RightLowerArm = 17,
+        RightHand = 18,
+        Neck = 19,
+        Head = 20,
     }
 
     public enum ParkMode
@@ -434,6 +485,51 @@ namespace GTAVTools
         MidLeft = 6,
         MidRight = 7,
         Invalid = 8,
+    }
+
+    public enum PainID
+    {
+        Unknown = 1,
+        ShortScream = 6,
+        ScaredScream = 7,
+        OnFire = 8
+    }
+
+    public enum HorizontalGFXAlign
+    {
+        Center = 67,
+        Left = 76,
+        Right = 82,
+    }
+
+    public enum VerticalGFXAlign
+    {
+        Center = 67,
+        Back = 66,
+        Top = 84
+    }
+
+    public struct ScreenRes
+    {
+        public int x;
+        public int y;
+        public ScreenRes(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    public struct NMParam
+    {
+        public string name;
+        public object value;
+
+        public NMParam(string name, object value)
+        {
+            this.name = name;
+            this.value = value;
+        }
     }
 
     public class IntRGB
@@ -1847,7 +1943,6 @@ namespace GTAVTools
         /// </summary>
         public uint handle { get; }
 
-        private static IntPtr scea;
         private static GSCED gse;
 
 
@@ -2631,6 +2726,14 @@ namespace GTAVTools
         }
 
         /// <summary>
+        /// Makes this ped play a pain noise from its pain id.
+        /// </summary>
+        public void PlayPain(PainID id)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xBC9AE166038A5CEC), this.handle, (int)id, false, false);
+        }
+
+        /// <summary>
         /// Gets the specified config flag value on this ped.
         /// </summary>
         public bool GetConfigFlag(int flag)
@@ -2708,8 +2811,18 @@ namespace GTAVTools
         }
 
         /// <summary>
+        /// Just GTAV.RunNmTaskWithArgsOnPed but shorter.
+        /// </summary>
+        public void RunNMTaskWithArgs(string message, List<NMParam> math, List<NMParam> vector)
+        {
+            GTAV.RunNmTaskWithArgsOnPed(this, message, math, vector);
+        }
+
+
+        /// <summary>
         /// Sends the NaturalMotion message to this ped.
         /// </summary>
+        [Obsolete("This function is deprecated, use GTAV.RunNmTaskWithArgsOnPed or GTAVPed.RunNMTaskWithArgs")]
         public void SendNMMessage(NMMessage message)
         {
             Function.Call(GTAV.HexHashToNativeHash(0x418EF2A1BCE56685), true, (int)message);
@@ -2719,6 +2832,7 @@ namespace GTAVTools
         /// <summary>
         /// Sends the NaturalMotion message to this ped.
         /// </summary>
+        [Obsolete("This function is deprecated, use GTAV.RunNmTaskWithArgsOnPed or GTAVPed.RunNMTaskWithArgs")]
         public void SendNMMessage(int message)
         {
             Function.Call(GTAV.HexHashToNativeHash(0x418EF2A1BCE56685), true, (int)message);
@@ -2728,6 +2842,7 @@ namespace GTAVTools
         /// <summary>
         /// Sends the NaturalMotion message to this ped and can auto-ragdoll them.
         /// </summary>
+        [Obsolete("This function is deprecated, use GTAV.RunNmTaskWithArgsOnPed or GTAVPed.RunNMTaskWithArgs")]
         public void SendNMMessage(NMMessage message, bool autoragdoll)
         {
             if (autoragdoll)
@@ -2741,6 +2856,7 @@ namespace GTAVTools
         /// <summary>
         /// Sends the NaturalMotion message to this ped and can auto-ragdoll them.
         /// </summary>
+        [Obsolete("This function is deprecated, use GTAV.RunNmTaskWithArgsOnPed or GTAVPed.RunNMTaskWithArgs")]
         public void SendNMMessage(int message, bool autoragdoll)
         {
             if (autoragdoll)
@@ -2754,6 +2870,7 @@ namespace GTAVTools
         /// <summary>
         /// Sends the NaturalMotion message to this ped, can auto-ragdoll them and can ragdoll them for a specific duration of time (in ms).
         /// </summary>
+        [Obsolete("This function is deprecated, use GTAV.RunNmTaskWithArgsOnPed or GTAVPed.RunNMTaskWithArgs")]
         public void SendNMMessage(NMMessage message, bool autoragdoll, int duration)
         {
             if (autoragdoll)
@@ -2767,6 +2884,7 @@ namespace GTAVTools
         /// <summary>
         /// Sends the NaturalMotion message to this ped, can auto-ragdoll them and can ragdoll them for a specific duration of time (in ms).
         /// </summary>
+        [Obsolete("This function is deprecated, use GTAV.RunNmTaskWithArgsOnPed or GTAVPed.RunNMTaskWithArgs")]
         public void SendNMMessage(int message, bool autoragdoll, int duration)
         {
             if (autoragdoll)
@@ -3515,12 +3633,217 @@ namespace GTAVTools
     }
     #endregion
 
-    #region Core
-    public class GTAV : Script
+    #region Scaleform
+    public class GTAVScaleform
     {
+
+        /// <summary>
+        /// The handle for this scaleform.
+        /// <summary>
+        public int handle;
+
+        /// <summary>
+        /// A scaleform movie.
+        /// <summary>
+        public GTAVScaleform(string scaleform)
+        {
+            this.handle = Function.Call<int>(GTAV.HexHashToNativeHash(0x11FE353CF9733E6F), scaleform); 
+        }
+
+        /// <summary>
+        /// A scaleform movie. (only use this to create a GTAVScaleform from an already existing scaleform)
+        /// <summary>
+        public GTAVScaleform(int scaleform)
+        {
+            this.handle = scaleform;
+        }
+
+        /// <summary>
+        /// Begins a method on this scaleform movie if it exists.
+        /// <summary>
+        public void BeginMovieMethod(string methodname)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xF6E48914C7A8694E), this.handle, methodname);
+        }
+
+        /// <summary>
+        /// Pushes a float to the currently queued movie methods call stack.
+        /// <summary>
+        public void AddFloatParam(float param)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xD69736AAE04DB51A), param);
+        }
+
+        /// <summary>
+        /// Pushes a int to the currently queued movie methods call stack.
+        /// <summary>
+        public void AddIntParam(int param)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xC3D0841A0CC546A6), param);
+        }
+
+        /// <summary>
+        /// Pushes a bool to the currently queued movie methods call stack.
+        /// <summary>
+        public void AddBoolParam(int param)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xC58424BA936EB458), param);
+        }
+
+        /// <summary>
+        /// Pushes a literal-string to the currently queued movie methods call stack.
+        /// <summary>
+        public void AddLiteralStringParam(string param)
+        {
+            Function.Call(GTAV.HexHashToNativeHash(0x77FE3402004CD1B0), param);
+        }
+
+        /// <summary>
+        /// Pushes a texture-name-string to the currently queued movie methods call stack.
+        /// <summary>
+        public void AddTextureNameStringParam(string param)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xBA7148484BD90365), param);
+        }
+
+        /// <summary>
+        /// Pushes a player-name-string to the currently queued movie methods call stack.
+        /// <summary>
+        public void AddPlayerNameStringParam(string param)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xE83A3E3557A56640), param);
+        }
+
+        /// <summary>
+        /// Pushes a latest-brief-string to the currently queued movie methods call stack.
+        /// <summary>
+        public void AddLatestBriefStringParam(int param)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xEC52C631A1831C03), param);
+        }
+
+        /// <summary>
+        /// Draws this scaleform movie.
+        /// <summary>
+        public void DrawScaleformMovie(float x, float y, float width, float height)
+        {
+            Function.Call(GTAV.HexHashToNativeHash(0x54972ADAF0294A93), this.handle, x, y, width, height, 255, 255, 255, 255, 0);
+        }
+
+        /// <summary>
+        /// Draws this scaleform movie with a specific color and alpha value.
+        /// <summary>
+        public void DrawScaleformMovie(float x, float y, float width, float height, IntRGB rgb, int alpha)
+        {
+            Function.Call(GTAV.HexHashToNativeHash(0x54972ADAF0294A93), this.handle, x, y, width, height, rgb.r, rgb.g, rgb.b, alpha, 0);
+        }
+
+        /// <summary>
+        /// Draws this scaleform movie in fullscreen.
+        /// <summary>
+        public void DrawScaleformMovieFullscreen()
+        {
+            Function.Call(GTAV.HexHashToNativeHash(0x0DF606929C105BE1), this.handle, 255, 255, 255, 255, 0);
+        }
+
+        /// <summary>
+        /// Draws this scaleform movie in fullscreen with a specific color and alpha value.
+        /// <summary>
+        public void DrawScaleformMovieFullscreen(IntRGB rgb, int alpha)
+        {
+            Function.Call(GTAV.HexHashToNativeHash(0x0DF606929C105BE1), this.handle, rgb.r, rgb.g, rgb.b, alpha, 0);
+        }
+
+        /// <summary>
+        /// Draws this scaleform movie in fullscreen masked with a second scaleform.
+        /// <summary>
+        public void DrawScaleformMovieFullscreenMasked(GTAVScaleform scaleform2)
+        {
+            Function.Call(GTAV.HexHashToNativeHash(0x0DF606929C105BE1), this.handle, scaleform2.handle, 255, 25, 255, 255, 0);
+        }
+
+        /// <summary>
+        /// Draws this scaleform movie in fullscreen masked with a second scaleform with a specific color and alpha value.
+        /// <summary>
+        public void DrawScaleformMovieFullscreenMasked(GTAVScaleform scaleform2, IntRGB rgb, int alpha)
+        {
+            Function.Call(GTAV.HexHashToNativeHash(0x0DF606929C105BE1), this.handle, scaleform2.handle, 255, 25, 255, 255, 0);
+        }
+
+        /// <summary>
+        /// Draws this scaleform movie in 3D with specific position, rotation, scale and rotation order params.
+        /// <summary>
+        public void DrawScaleformMovie3D(Vector3 pos, Vector3 rot, Vector3 scale, int rotorder)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0x87D51D72255D4E78), pos.X, pos.Y, pos.Z, rot.X, rot.Y, rot.Z, 0, 0, 0, scale.X, scale.Y, scale.Z, rotorder);
+        }
+
+        /// <summary>
+        /// Draws this scaleform movie in 3D solid (unlit maybe?) with specific position, rotation, scale and rotation order params.
+        /// <summary>
+        public void DrawScaleformMovie3DSolid(Vector3 pos, Vector3 rot, Vector3 scale, int rotorder)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0x1CE592FDC749D6F5), pos.X, pos.Y, pos.Z, rot.X, rot.Y, rot.Z, 0, 0, 0, scale.X, scale.Y, scale.Z, rotorder);
+        }
+    }
+    #endregion
+
+    #region Core
+    public unsafe class GTAV : Script
+    {
+
+        /// <summary>
+        /// Internal NaturalMotion function pointer.
+        /// <summary>
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        internal delegate ulong InitNMMsg(ulong ph, ulong bh, int size);
+
+        /// <summary>
+        /// Internal NaturalMotion function pointer.
+        /// <summary>
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        internal delegate void StartNmTaskOnPed(ulong ped, IntPtr msg, ulong unk);
+
+        /// <summary>
+        /// Internal NaturalMotion function pointer.
+        /// <summary>
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        internal delegate byte SetNmInt(ulong mptr, IntPtr pnptr, int val);
+
+        /// <summary>
+        /// Internal NaturalMotion function pointer.
+        /// <summary>
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        internal delegate byte SetNmBool(ulong mptr, IntPtr pnptr, bool val);
+
+        /// <summary>
+        /// Internal NaturalMotion function pointer.
+        /// <summary>
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        internal delegate byte SetNmFloat(ulong mptr, IntPtr pnptr, float val);
+
+        /// <summary>
+        /// Internal NaturalMotion function pointer.
+        /// <summary>
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        internal delegate byte SetNmString(ulong mptr, IntPtr pnptr, IntPtr val);
+
+        /// <summary>
+        /// Internal NaturalMotion function pointer.
+        /// <summary>
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        internal delegate byte SetNmVec3(ulong mptr, IntPtr pnptr, float x, float y, float z);
 
         internal static GTAVPlayer internalplayer = new GTAVPlayer();
         internal static List<InternalMemIdentifier> memidentifiers = new List<InternalMemIdentifier>();
+        private static InitNMMsg initnmmessage;
+        internal static StartNmTaskOnPed startnmtaskonped;
+        internal static SetNmInt setnmint;
+        internal static SetNmBool setnmbool;
+        internal static SetNmFloat setnmfloat;
+        internal static SetNmString setnmstring;
+        internal static SetNmVec3 setnmvec3;
+        internal static int idontfuckingknow;
 
         /// <summary>
         /// The player.
@@ -3534,6 +3857,17 @@ namespace GTAVTools
         }
 
         /// <summary>
+        /// How long the game has been running.
+        /// </summary>
+        public static int runtime
+        {
+            get
+            {
+                return Function.Call<int>(GTAV.HexHashToNativeHashU(0x9CD27B0045628463));
+            }
+        }
+
+        /// <summary>
         /// The games global time scale.
         /// </summary>
         public static float timescale
@@ -3541,6 +3875,48 @@ namespace GTAVTools
             set
             {
                 Function.Call(GTAV.HexHashToNativeHash(0x1D408577D440E81E), value);
+            }
+        }
+
+        /// <summary>
+        /// The X value of the players screen resolution
+        /// </summary>
+        public static int screenresx
+        {
+            get
+            {
+                OutputArgument x = new OutputArgument();
+                OutputArgument y = new OutputArgument();
+                Function.Call(GTAV.HexHashToNativeHashU(0x873C9F3104101DD3), x, y);
+                return x.GetResult<int>();
+            }
+        }
+
+        /// <summary>
+        /// The Y value of the players screen resolution
+        /// </summary>
+        public static int screenresy
+        {
+            get
+            {
+                OutputArgument x = new OutputArgument();
+                OutputArgument y = new OutputArgument();
+                Function.Call(GTAV.HexHashToNativeHashU(0x873C9F3104101DD3), x, y);
+                return y.GetResult<int>();
+            }
+        }
+
+        /// <summary>
+        /// The players screen resolution
+        /// </summary>
+        public static ScreenRes screenres
+        {
+            get
+            {
+                OutputArgument x = new OutputArgument();
+                OutputArgument y = new OutputArgument();
+                Function.Call(GTAV.HexHashToNativeHashU(0x873C9F3104101DD3), x, y);
+                return new ScreenRes(x.GetResult<int>(), y.GetResult<int>());
             }
         }
 
@@ -3564,11 +3940,173 @@ namespace GTAVTools
         }
 
         /// <summary>
+        /// Resolves a relative address
+        /// </summary>
+        internal static unsafe long ResRelAddr(long r, int rop, int ibo)
+        {
+            int rel = *(int*)(r + rop);
+            return r + ibo + rel;
+        }
+
+        /// <summary>
         /// GTAVTools.GTAV
         /// </summary>
-        public GTAV()
+        public unsafe GTAV()
         {
             Tick += OnTick;
+            IntPtr ireallydontknow = GTAV.FindPattern("\x48\x83\xEC\x28\x48\x8B\x42\x00\x48\x85\xC0\x74\x09\x48\x3B\x82\x00\x00\x00\x00\x74\x21", "xxxxxxx?xxxxxxxx????xx");
+            if (ireallydontknow != null)
+            {
+                idontfuckingknow = *(int*)(ireallydontknow + 16);
+            }
+            IntPtr initmsg = GTAV.FindPattern("\x40\x53\x48\x83\xEC\x20\x83\x61\x0C\x00\x44\x89\x41\x08\x49\x63\xC0", "xxxxxxxxxxxxxxxxx");
+            if (initmsg != null)
+            {
+                initnmmessage = Marshal.GetDelegateForFunctionPointer<InitNMMsg>(initmsg);
+            }
+            IntPtr startnmonped = GTAV.FindPattern("\x0F\x84\x8B\x00\x00\x00\x48\x8B\x47\x30\x48\x8B\x48\x10\x48\x8B\x51\x20\x80\x7A\x10\x0A", "xxxxxxxxxxxxxxxxxxxxxx");
+            if (startnmonped != IntPtr.Zero)
+            {
+                long target = ResRelAddr(startnmonped.ToInt64(), -0x1E, -0x1A);
+                startnmtaskonped = Marshal.GetDelegateForFunctionPointer<StartNmTaskOnPed>((IntPtr)target);
+            }
+            IntPtr setint = GTAV.FindPattern("\x48\x89\x5C\x24\x00\x57\x48\x83\xEC\x20\x48\x8B\xD9\x48\x63\x49\x0C\x41\x8B\xF8", "xxxx?xxxxxxxxxxxxxxx");
+            if (setint != IntPtr.Zero)
+            {
+                setnmint = Marshal.GetDelegateForFunctionPointer<SetNmInt>(setint);
+            }
+            IntPtr setbool = GTAV.FindPattern("\x48\x89\x5C\x24\x00\x57\x48\x83\xEC\x20\x48\x8B\xD9\x48\x63\x49\x0C\x41\x8A\xF8", "xxxx?xxxxxxxxxxxxxxx");
+            if (setbool != IntPtr.Zero)
+            {
+                setnmbool = Marshal.GetDelegateForFunctionPointer<SetNmBool>(setbool);
+            }
+            IntPtr setfloat = GTAV.FindPattern("\x40\x53\x48\x83\xEC\x30\x48\x8B\xD9\x48\x63\x49\x0C", "xxxxxxxxxxxxx");
+            if (setfloat != IntPtr.Zero)
+            {
+                setnmfloat = Marshal.GetDelegateForFunctionPointer<SetNmFloat>(setfloat);
+            }
+            IntPtr setstring = GTAV.FindPattern("\x57\x48\x83\xEC\x20\x48\x8B\xD9\x48\x63\x49\x0C\x49\x8B\xE8", "xxxxxxxxxxxxxxx");
+            if (setstring != IntPtr.Zero)
+            {
+                long addr = setstring.ToInt64() - 15;
+                IntPtr fnptr = new IntPtr(addr);
+                setnmstring = Marshal.GetDelegateForFunctionPointer<SetNmString>(fnptr);
+            }
+            IntPtr setvec3 = GTAV.FindPattern("\x40\x53\x48\x83\xEC\x40\x48\x8B\xD9\x48\x63\x49\x0C", "xxxxxxxxxxxxx");
+            if (setstring != IntPtr.Zero)
+            {
+                setnmvec3 = Marshal.GetDelegateForFunctionPointer<SetNmVec3>(setvec3);
+            }
+        }
+
+        /// <summary>
+        /// Converts a string into a pointer.
+        /// </summary>
+        internal static unsafe IntPtr String(string str)
+        {
+            byte[] utf8 = Encoding.UTF8.GetBytes(str);
+            IntPtr ptr = Marshal.AllocCoTaskMem(utf8.Length + 1);
+            if (ptr == IntPtr.Zero)
+            {
+                throw new Exception("Out of game memory.");
+            }
+            Marshal.Copy(utf8, 0, ptr, utf8.Length);
+            byte* pointer = (byte*)ptr.ToPointer();
+            pointer[utf8.Length] = 0;
+            return ptr;
+        }
+
+        /// <summary>
+        /// Pins a string.
+        /// </summary>
+        internal static IntPtr PinString(string str)
+        {
+            IntPtr handle = String(str);
+            return handle == IntPtr.Zero ? String("") : handle;
+        }
+
+        /// <summary>
+        /// I don't know
+        /// </summary>
+        internal static float ConvFloat(float fl)
+        {
+            return *(float*)(&fl);
+        }
+
+        /// <summary>
+        /// Sets parameters for the next NaturalMotion task call.
+        /// </summary>
+        internal unsafe static void SetNMParams(ulong message, List<NMParam> numeric, List<NMParam> vector)
+        {
+            if (numeric != null)
+            {
+                foreach (var param in numeric)
+                {
+                    IntPtr name = PinString(param.name);
+                    switch (param.value)
+                    {
+                        case float fl:
+                            setnmfloat(message, name, ConvFloat(fl));
+                            break;
+                        case bool bl:
+                            setnmbool(message, name, bl ? true : false);
+                            break;
+                        case int intgr:
+                            setnmint(message, name, intgr);
+                            break;
+                    }
+                }
+            }
+            if (vector != null)
+            {
+                foreach (var param in vector)
+                {
+                    IntPtr name = PinString(param.name);
+                    switch (param.value)
+                    {
+                        case Vector3 v:
+                            setnmvec3(message, name, ConvFloat(v.X), ConvFloat(v.Y), ConvFloat(v.Z));
+                            break;
+                        case float[] arr when arr.Length >= 3:
+                            setnmvec3(message, name, ConvFloat(arr[0]), ConvFloat(arr[1]), ConvFloat(arr[2]));
+                            break;
+                        case string s:
+                            setnmstring(message, name, PinString(s));
+                            break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// A NaturalMotion task.
+        /// </summary>
+        public class NMTask
+        {
+            private GTAVPed ped;
+            private string msg;
+            private List<NMParam> numeric;
+            private List<NMParam> vector;
+
+            internal NMTask(GTAVPed targ, string msgname, List<NMParam> nums, List<NMParam> vecs)
+            {
+                ped = targ;
+                this.msg = msgname;
+                this.numeric = nums;
+                this.vector = vecs;
+            }
+
+            public void Execute()
+            {
+                byte* pedaddr = (byte*)ped.memaddress;
+                ulong msgmem = (ulong)Marshal.AllocCoTaskMem(0x1218).ToInt64();
+                initnmmessage(msgmem, msgmem + 0x18, 0x40);
+                SetNMParams(msgmem, numeric, vector);
+                ulong wtf = *(ulong*)(pedaddr + idontfuckingknow);
+                IntPtr msptr = PinString(msg);
+                startnmtaskonped((ulong)wtf, msptr, msgmem);
+                Marshal.FreeCoTaskMem(new IntPtr((long)msgmem));
+            }
         }
 
         /// <summary>
@@ -3581,6 +4119,24 @@ namespace GTAVTools
             {
                 internalplayer = new GTAVPlayer();
             }
+            if (!init)
+            {
+                init = true;
+
+            }
+        }
+
+        /// <summary>
+        /// Experimental function for running NaturalMotion tasks with arguments, to auto-start the task make an NMParam called "start" and make its value true.
+        /// </summary>
+        public static void RunNmTaskWithArgsOnPed(GTAVPed target, string message, List<NMParam> math, List<NMParam> vector)
+        {
+            if (!target.isragdoll)
+            {
+                Function.Call(GTAV.HexHashToNativeHashU(0xAE99FB955581844A), target, -1, -1, 1, true, true, false);
+            }
+            NMTask task = new NMTask(target, message, math, vector);
+            task.Execute();
         }
 
 
@@ -3960,7 +4516,7 @@ namespace GTAVTools
         /// </summary>
         public static void SetPTFXAssetForNextCall(string ptfx)
         {
-            Function.Call(GTAV.HexHashToNativeHash(0x6C38AF3693A69A91), ptfx); 
+            Function.Call(GTAV.HexHashToNativeHash(0x6C38AF3693A69A91), ptfx);
         }
 
         /// <summary>
@@ -4204,67 +4760,77 @@ namespace GTAVTools
                 throw new Exception("Illegal creation of MemoryPatch, the memory might be protected, corrupted or non-existent.");
             }
         }
-    }
 
+        /// <summary>
+        /// Sets the GFX Align stuff, I really don't know how to describe this one.
+        /// </summary>
+        public static void SetScriptGFXAlign(HorizontalGFXAlign horizontal, VerticalGFXAlign vertical)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xB8A850F20A067EB6), (int)horizontal, (int)vertical);
+        }
+
+        /// <summary>
+        /// Sets the parameters for the current GFX Align call.
+        /// </summary>
+        public static void SetScriptGFXAlignParams(float x, float y, float width, float height)
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xF5A2C681787E579D), x, y, width, height);
+        }
+
+        /// <summary>
+        /// Resets the parameters for the next GFX Align call.
+        /// </summary>
+        public static void ResetScriptGFXAlign()
+        {
+            Function.Call(GTAV.HexHashToNativeHashU(0xE3A3DB414A373DAB));
+        }
+    }
+    #endregion
+
+    #region Natives
     ///// <summary>
     ///// Utilites for running native calls.
     ///// </summary>
     //public unsafe static class NativeUtils
     //{
+    //    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    //    public delegate void NativeCallback();
+
+    //    [DllImport("GTAVTools.asi", CallingConvention = CallingConvention.Cdecl)]
+    //    public static extern void RunNativeOnFiber(NativeCallback cb);
+
     //    [SuppressUnmanagedCodeSecurity]
     //    [DllImport("ScriptHookV.dll", ExactSpelling = true, EntryPoint = "?nativeInit@@YAX_K@Z")]
-    //    private static extern void NativeInit(ulong hash);
+    //    internal static extern void nativeInit(ulong hash);
     //    [SuppressUnmanagedCodeSecurity]
     //    [DllImport("ScriptHookV.dll", ExactSpelling = true, EntryPoint = "?nativePush64@@YAX_K@Z")]
-    //    private static extern void NativePush64(ulong val);
+    //    internal static extern void nativePush64(ulong val);
     //    [SuppressUnmanagedCodeSecurity]
     //    [DllImport("ScriptHookV.dll", ExactSpelling = true, EntryPoint = "?nativeCall@@YAPEA_KXZ")]
-    //    private static extern ulong* NativeCall();
-
-    //    /// <summary>
-    //    /// Converts a string into a pointer.
-    //    /// </summary>
-    //    internal static unsafe IntPtr String(string str)
-    //    {
-    //        byte[] utf8 = Encoding.UTF8.GetBytes(str);
-    //        IntPtr ptr = Marshal.AllocCoTaskMem(utf8.Length + 1);
-    //        if (ptr == IntPtr.Zero)
-    //        {
-    //            throw new Exception("Out of game memory.");
-    //        }
-    //        Marshal.Copy(utf8, 0, ptr, utf8.Length);
-    //        byte* pointer = (byte*)ptr.ToPointer();
-    //        pointer[utf8.Length] = 0;
-    //        return ptr;
-    //    }
-
-    //    /// <summary>
-    //    /// Pins a string.
-    //    /// </summary>
-    //    internal static IntPtr PinString(string str)
-    //    {
-    //        IntPtr handle = String(str);
-    //        return handle == IntPtr.Zero ? String("") : handle;
-    //    }
+    //    internal static extern ulong* nativeCall();
 
     //    /// <summary>
     //    /// Runs a native with the specified arguments.
     //    /// </summary>
-    //    public static void Execute(ulong hash, params object[] args)
+    //    public unsafe static void Execute(ulong hash, params object[] args)
     //    {
-    //        NativeInit(hash);
-    //        for (int i = args.Length - 1; i >= 0; i--)
+    //        RunNativeOnFiber(() =>
     //        {
-    //            NativePush64(new NativeArg(args[i]).value);
-    //        }
-    //        NativeCall();
+    //            nativeInit(hash);
+    //            foreach (object arg in args)
+    //            {
+    //                nativePush64(new NativeArg(arg).value);
+    //            }
+    //            nativeCall();
+    //        });
     //    }
     //}
+
 
     ///// <summary>
     ///// A native argument.
     ///// </summary>
-    //public class NativeArg
+    //public unsafe class NativeArg
     //{
     //    public ulong value { get; }
 
@@ -4275,27 +4841,35 @@ namespace GTAVTools
     //            case int i:
     //                value = (ulong)i;
     //                break;
+
     //            case uint ui:
     //                value = ui;
     //                break;
+
     //            case bool b:
     //                value = b ? 1UL : 0UL;
     //                break;
+
     //            case float f:
-    //                value = BitConverter.ToUInt32(BitConverter.GetBytes(f), 0);
-    //                break;
-    //            case double d:
-    //                value = BitConverter.ToUInt64(BitConverter.GetBytes(d), 0);
-    //                break;
+    //                {
+    //                    ulong packed = 0;
+    //                    *(float*)&packed = f;
+    //                    value = packed;
+    //                    break;
+    //                }
+
     //            case IntPtr ptr:
     //                value = (ulong)ptr.ToInt64();
     //                break;
+
     //            case string s:
-    //                value = (ulong)NativeUtils.PinString(s).ToInt64();
+    //                value = (ulong)GTAV.PinString(s).ToInt64();
     //                break;
+
     //            case Enum e:
     //                value = Convert.ToUInt64(e);
     //                break;
+
     //            default:
     //                throw new Exception($"Unsupported argument on native: {arg.GetType()}");
     //        }
