@@ -1,7 +1,4 @@
-# GTAVTools
-GTAVTools is an extension to SHVDN built in C# used to mainly improve my coding experience but anyone else can use it, credit helps! 
-
-Updates are published within the source code and then into the compiled DLL.
+# THIS MOD IS ENTIRELY DISCONTINUED, IT WILL NOT BE UPDATED ANYMORE.
 
 # How to install
 Step 1: Make sure you have the latest ScriptHookV (http://www.dev-c.com/gtav/scripthookv/) and ScriptHookV .NET (https://github.com/scripthookvdotnet/scripthookvdotnet-nightly), if not, install them.
